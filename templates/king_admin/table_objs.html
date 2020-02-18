@@ -1,0 +1,210 @@
+{% extends 'king_admin/table_index.html' %}
+{% load tags %}
+
+
+{% block container %}
+
+    {{ admin_class.list_display }}
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h3 class="panel-title">{% get_model_name admin_class %}
+                {% if not admin_class.readonly_table %}
+                <a href="{{ request.path }}add/" class="pull-right">Add</a>
+                {% endif %}
+
+</h3>
+
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <form action="" class="" method="get">
+{#                    条件过滤#}
+                    {% for filter_field in admin_class.list_filters %}
+                        <div class="col-lg-2">
+                            <span>{{ filter_field }}</span>
+                            {% render_filter_element filter_field admin_class filter_conditions %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-success">检索</button>
+{#                添加搜索功能#}
+                <hr>
+                <div class="row">
+
+                    <div class="col-lg-3" style="margin-left: 15px">
+{#                    value的作用是将搜索的内容显示在输入框中#}
+{#                    placeholder的作用是提示用户可以按照什么字段搜索#}
+                        <input type="search" name="_q" class="form-control"  value="{{ search_text }}"
+                        placeholder="{% for search_field in admin_class.search_fields %} {{ search_field }}, {% endfor %}">
+                    </div>
+                    <div class="col-lg-2">
+                         <button type="submit" class="btn btn-success">search</button>
+                    </div>
+                </div>
+                </form>
+
+            <div class="row" style="margin-top: 10px">
+                <form onsubmit="return ActionSubmit(this)" method="POST">{% csrf_token %}
+
+                 <div class="col-lg-2">
+                    <select id="action_list" name="action" class="form-control" style="margin-left: 15px">
+                        <option value="">------</option>
+                        {% for action in admin_class.actions %}
+                        <option value="{{ action }}">{% get_action_verbose_name admin_class action %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-1">
+                         <button type="submit" class="btn btn-success">Go</button>
+                </div>
+
+                </form>
+            </div>
+
+            </div>
+
+{#            具体的表格内容展示#}
+            <table class="table table-hover">
+                <thead>
+                <tr>
+{#                添加该行，添加CheckBox标签#}
+                    <th style="width: 35px"><input type="checkbox" onclick="CheckAllToggle(this);"></th>
+{#                    添加排序参数和拼接url#}
+                    {% for column in admin_class.list_display %}
+{#                        <th>{{ column }}</th>#}
+{#                        <th><a href="?o={{ column }}">{{ column }}</a></th>#}
+                        {% create_table_title column order_by_text filter_conditions admin_class %}
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+{#                给返回的数据起个别名query_sets#}
+{#                {% get_query_sets admin_class as query_sets %}#}
+                {% for obj in query_set %}
+                    <tr>
+{#                        添加该行，添加CheckBox标签#}
+                        <td><input tag="obj_checkbox" type="checkbox" value="{{ obj.id }}"></td>
+{#                        取每一行数据元素值#}
+{#                        要获取request.path,从前端穿进去#}
+                        {% build_table_row request obj admin_class %}
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+            <nav>
+{#                分页处理 分页标签显示#}
+                <ul class="pagination">
+{#                判断是否有上一页#}
+                    {% if query_set.has_previous %}
+                        <li class="">
+                            <a href="?page={{ query_set.previous_page_number }}">上一页</a>
+                        </li>
+                    {% endif %}
+
+{#                优化前的分页处理#}
+{#                {% for loop_counter in query_sets.paginator.page_range %}#}
+{#                    {% render_page_ele loop_counter query_set filter_conditions %}#}
+{#                {% endfor %}#}
+{#                 优化后的分页处理，把整个循环放在后台tags中去做#}
+                {% create_page_element query_set filter_conditions search_text order_by_text %}
+{#                判断是否有下一页#}
+                {% if query_set.has_next %}
+                    <li class="">
+                        <a href="?page={{ query_set.next_page_number }}">下一页</a>
+                    </li>
+                {% endif %}
+                </ul>
+                <p>
+                    数量统计：<mark style="margin: auto 5px">{{ query_set.paginator.count }}条</mark>
+                </p>
+            </nav>
+
+        </div>
+    </div>
+
+
+    <script>
+    function CheckAllToggle(ele) {
+{#        console.log($(ele).prop("checked"))#}
+        if($(ele).prop('checked')){
+            $('input[tag="obj_checkbox"]').prop('checked', true);
+        }else{
+            $('input[tag="obj_checkbox"]').prop('checked', false);
+        }
+
+
+    }
+    function ActionSubmit(form_ele) {
+        var selected_ids = [];
+        $("input[tag='obj_checkbox']:checked").each(function() {
+            selected_ids.push($(this).val());
+        });
+        var selected_action = $('#action_list').val();
+        console.log(selected_ids)
+        console.log(selected_action)
+
+        if (selected_ids.length == 0) {
+            alert("No object got selected!");
+        }
+         if (!selected_action) {
+            alert("No action got selected!");
+        }
+
+
+        //start submit
+        var selected_ids_ele = "<input name='selected_ids' type='hidden' value='" + selected_ids.toString() + "'>";
+        $(form_ele).append(selected_ids_ele);
+
+        return true;
+
+    }
+
+</script>
+
+{% endblock %}
+
+
+{#{% block body %}#}
+{#<body>#}
+
+{#    <nav class="navbar navbar-inverse navbar-fixed-top">#}
+{#      <div class="container-fluid">#}
+{#        <div class="navbar-header">#}
+{#          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">#}
+{#            <span class="sr-only">Toggle navigation</span>#}
+{#            <span class="icon-bar"></span>#}
+{#            <span class="icon-bar"></span>#}
+{#            <span class="icon-bar"></span>#}
+{#          </button>#}
+{#          <a class="navbar-brand" href="https://v3.bootcss.com/examples/dashboard/#">Oldboy PerfectCRM</a>#}
+{#        </div>#}
+{#        <div id="navbar" class="navbar-collapse collapse">#}
+{#          <ul class="nav navbar-nav navbar-right">#}
+{##}
+{#            <li><a href="#">{{ request.user }}</a></li>#}
+{#          </ul>#}
+{##}
+{#        </div>#}
+{#      </div>#}
+{#    </nav>#}
+
+{#{{ model_obj.objects.all }}#}
+{#{{ admin_class.model.objects.all }}#}
+{#{{  admin_class.list_display }}#}
+
+
+{#</body>#}
+{#{% endblock %}#}
+
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="./static/js/jquery.min.js"><\/script>')</script>
+<script src="/static/js/bootstrap.min.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="/static/js/holder.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+{#<script src="/static/js/ie10-viewport-bug-workaround.js"></script>#}
+

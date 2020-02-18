@@ -1,0 +1,95 @@
+{#继承母板#}
+{% extends 'base.html' %}
+{% load tags %}
+
+{#继承块内容#}
+{% block body %}
+<body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="https://v3.bootcss.com/examples/dashboard/#">Oldboy PerfectCRM</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+
+            <li class="dropdown open">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">{{ request.user.name }}<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">配置</a></li>
+                  <li><a href="{% url 'acc_logout' %}">注销</a></li>
+                </ul>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" style="margin: 50px; width: auto">
+{#        为后面继承的块#}
+        {% block container %}
+            <div class="row">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Panel title</h3>
+                    </div>
+                    <div class="panel-body">
+                        {{ table_list }}
+                        {% for app_name,app_tabls in table_list.items %}
+
+                             <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ app_name }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for table_name,admin in app_tabls.items %}
+                                    <tr>
+{#                                    1.链接：url/应用名/表名 2.显示中文表名--使用自定义标签进行处理#}
+                                        <td>
+                                            <a href="{% url 'table_objs' app_name table_name %}">
+                                               {% render_app_name admin %}
+                                            </a>
+                                            </td>
+                                        <td>add</td>
+                                        <td>change</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        {% endfor %}
+
+                    </div>
+                </div>
+            </div>
+        {% endblock %}
+    </div>
+
+
+
+
+
+</body>
+{% endblock %}
+
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="./static/js/jquery.min.js"><\/script>')</script>
+<script src="/static/js/bootstrap.min.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="/static/js/holder.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+{#<script src="/static/js/ie10-viewport-bug-workaround.js"></script>#}

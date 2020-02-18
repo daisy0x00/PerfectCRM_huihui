@@ -1,0 +1,267 @@
+{% extends 'king_admin/table_index.html' %}
+{% load tags %}
+{% block extra-css-resources %}
+    <style type="text/css">
+        .filter-select-box{
+            height: 250px!important;
+            width: 100%;
+            border-radius: 3px;
+        }
+    </style>
+{% endblock %}
+
+
+{% block container %}
+
+    change_table
+   <form class="form-horizontal" role="form" method="post" onsubmit="return SelectAllChosenData()">{% csrf_token %}
+   <span style="color: red">{{ form_obj.errors }}</span>
+    {% for field in form_obj %}
+      <div class="form-group">
+        <label  class="col-sm-2 control-label" style="font-weight: normal">
+            {% if field.field.required %}
+                <b>{{ field.label }}</b>
+            {% else %}
+                {{ field.label }}
+            {% endif %}
+        </label>
+        <div class="col-lg-3">
+            {% if field.name in admin_class.filter_horizontal %}
+                <div class="col-lg-5">
+                {% get_m2m_obj_list admin_class field form_obj as m2m_obj_list %}
+                    <select id="id_{{ field.name }}_from" multiple class="filter-select-box">
+                        {% if field.name in admin_class.readonly_fields and not admin_class.is_add_form %}
+                            {% for obj in m2m_obj_list %}
+                            <option value="{{ obj.id }}" disabled>{{ obj }}</option>
+                            {% endfor %}
+                        {% else %}
+                            {% for obj in m2m_obj_list %}
+                            <option ondblclick="MoveElementTo(this, 'id_{{ field.name }}_to','id_{{ field.name }}_from')" value="{{ obj.id }}">{{ obj }}</option>
+                            {% endfor %}
+                        {% endif %}
+
+                    </select>
+                </div>
+
+                <div class="col-lg-1">
+                    箭头
+                </div>
+
+                <div class="col-lg-5">
+                    {% get_m2m_selected_obj_list form_obj field as selected_obj_list %}
+                    <select tag="chosen_list" id="id_{{ field.name }}_to" name="{{ field.name }}" multiple class="filter-select-box">
+                       {% if field.name in admin_class.readonly_fields and not admin_class.is_add_form %}
+                            {% for obj in selected_obj_list %}
+                                <option value="{{ obj.id }}" disabled>{{ obj }}</option>
+                            {% endfor %}
+                       {% else %}
+                           {% for obj in selected_obj_list %}
+                                <option ondblclick="MoveElementTo(this, 'id_{{ field.name }}_from','id_{{ field.name }}_to')" value="{{ obj.id }}">{{ obj }}</option>
+                            {% endfor %}
+                       {% endif %}
+                    </select>
+
+{#                    {% print_obj_methods field %}#}
+                </div>
+                <span style="color: red">{{ field.errors.as_text }}</span>
+
+            {% else %}
+                {{ field }}
+                <span style="grey">{{ field.help_text }}</span>
+                <span style="color: red">{{ field.errors.as_text }}</span>
+            {% endif %}
+{#            {{ field.field.required }}#}
+        </div>
+      </div>
+    {% endfor %}
+
+    {% if not admin_class.readonly_table %}
+   <div class="form-group">
+       {% block obj_delete %}
+       <div class="col-sm-2">
+               <a class="btn btn-danger" href="{% url 'obj_delete' app_name table_name form_obj.instance.id %}">Delete</a>
+       </div>
+       {% endblock %}
+    <div class="col-sm-10">
+        <button type="submit" class="btn btn-success pull-right">Save</button>
+    </div>
+    </div>
+    {% endif %}
+
+    </form>
+
+    <script>
+        function MoveElementTo(ele, target_id,new_target_id) {
+
+          var opt_ele = "<option value='" + $(ele).val() + "' ondblclick=MoveElementTo(this,'" + new_target_id +"','"+ target_id + "')>" + $(ele).text() + "</option>"
+
+          $("#" +target_id).append(opt_ele);
+          $(ele).remove();
+      }
+        // 提交所有数据
+        function SelectAllChosenData() {
+            $("select[tag='chosen_list'] option").each(function () {
+                $(this).prop("selected",true);
+            })
+            // disabled数据处理
+            $("form").find("[disabled]").removeAttr("disabled");
+            return true;
+        }
+
+    </script>
+
+{% endblock %}
+
+
+
+
+
+{#{% block extra-css-resources %}#}
+{#<style>#}
+{#    .selector{#}
+{#        float: left;#}
+{#        text-align: left;#}
+{#    }#}
+{#    h5{#}
+{#        border: 1px solid #ccc;#}
+{#        border-radius: 4px 4px 0 0;#}
+{#        background: #f8f8f8;#}
+{#        color: #666;#}
+{#        padding: 8px;#}
+{#        font-weight: 400;#}
+{#        font-size: 13px;#}
+{#        height: 30px;#}
+{#        width: 300px;#}
+{#        margin-left: 15px;#}
+{#        margin-bottom: 0;#}
+{##}
+{##}
+{#    }#}
+{#     .right,.left{#}
+{#         border: 1px solid #ccc;#}
+{#         border-top: 0;#}
+{#         margin-left: 15px;#}
+{#    }#}
+{#     ul{#}
+{#         -webkit-padding-start: 30px;#}
+{#     }#}
+{#    .selector-add{#}
+{#        background: url(/static/imgs/selector-icons.svg) 0 -96px no-repeat;#}
+{#        list-style: none;#}
+{#    }#}
+{#    .selector-remove{#}
+{#        background: url(/static/imgs/selector-icons.svg) 0 -64px no-repeat;#}
+{#    }#}
+{#.selector-add, .selector-remove{#}
+{#        width: 16px;#}
+{#        height: 16px;#}
+{#        display: block;#}
+{#        text-indent: -3000px;#}
+{#        overflow: hidden;#}
+{#        cursor: default;#}
+{#        opacity: 0.3;#}
+{#}#}
+{#.selector-chooser {#}
+{#    float: left;#}
+{#    width: 16px;#}
+{#    background-color: #eee;#}
+{#    border-radius: 10px;#}
+{#    margin: 70px 5px 0 20px;#}
+{#    padding: 0;#}
+{#}#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{#{% block container %}#}
+{#    {% block top %}#}
+{#        <div>#}
+{#        <button class="btn btn-success pull-right"><a href="{% url 'king_admin:display_objects' app_name table_name %}" style="color: white">返回</a></button>#}
+{#        </div>#}
+{#    {% endblock %}#}
+{#    <form action="" method="post" class="form-horizontal" onsubmit="return SelectAllChosenData()">#}
+{#    {% csrf_token %}#}
+{#      双向复选框的判断#}
+{#        {% if field.name in admin_class.filter_horizontal %}#}
+{#            左复选框#}
+{#            <div class="selector">#}
+{#                <h5>Available tags</h5>#}
+{#                <div class="selector">#}
+{#                    获取多对多的被选中数据#}
+{#                    {% get_m2m_object_list admin_class form_object field as select_object_list %}#}
+{#                    <select class="left" style="width: 300px;height: 200px" multiple name="{{ field.name }}" id="id_{{ field.name }}_form">#}
+{#                        {% for item in select_object_list %}#}
+{#                            <option ondblclick="MoveElementTo(this,'id_{{ field.name }}_to','id_{{ field.name }}_from')" value="{{ item.id }}">{{ item }}</option>#}
+{#                        {% endfor %}#}
+{#                    </select>#}
+{#                </div>#}
+{#            </div>#}
+{#            中间箭头#}
+{#            <div style="float: left;margin-top: 50px">#}
+{#            <ul class="select-chooser">#}
+{#                <li><a title="Choose" href="#" id="id_tags_add_link" class="selector-add">Choose</a></li>#}
+{#                <li><a title="Remove" href="#" id="id_tags_remove_link" class="selector-remove">Remove</a></li>#}
+{#            </ul>#}
+{#            </div>#}
+{#            右复选框#}
+{#            <div class="selector">#}
+{#                <h5 style="background-color: #79aec8; color:white">Choosen tags</h5>#}
+{#                <div class="selector">#}
+{#                    {% get_m2m_selected_object_list form_object field as get_selected_list %}#}
+{#                    <select class="right" style="width: 300px;height: 200px" multiple name="{{ field.name }}" id="id_{{ field.name }}">#}
+{#                        {% for item in get_selected_list %}#}
+{#                            <option ondblclick="MoveElementTo(this,'id_{{ field.name }}_from', 'id_{{ field.name }}_to')" value="{{ item.id }}">{{ item }}</option>#}
+{#                        {% endfor %}#}
+{#                    </select>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#        {% else %}#}
+{#            <div class="col-lg-6" style="width: auto">#}
+{#                {{ field }}#}
+{#            <span style="color: red">{{ field.errors.as_text }}</span>#}
+{#            </div>#}
+{#        {% endif %}#}
+{##}
+{##}
+{#        {% for field in form_object %}#}
+{#            <div class="form-group">#}
+{#            显示名称#}
+{#                {% if field.field.required %}#}
+{#                    <label for="" class="col-sm-3 control-label" style="font-weight: normal">#}
+{#                         <span style="color: red">*</span>{{ field.label }}#}
+{#                    </label>#}
+{#                {% else %}#}
+{#                    <label for="" class="col-sm-3 control-label" style="font-weight: normal">#}
+{#                        {{ field.label }}#}
+{#                    </label>#}
+{#                {% endif %}#}
+{#                显示数据输入框#}
+{#                <div class="col-lg-6" style=""width: auto>#}
+{#                    {{ field }}<span style="color:red;">{{ field.errors }}</span>#}
+{#                </div>#}
+{#            </div>#}
+{#        {% endfor %}#}
+{#    <div class="form-group">#}
+{#        <div class="col-sm-10">#}
+{#            <button type="submit" class="btn btn-success pull-right">保存</button>#}
+{#        </div>#}
+{#    </div>#}
+{#    </form>#}
+{##}
+{#    <script>#}
+{#        function MoveElementTo(self, target_id,source_id) {#}
+{#            var_opt_ele = "<option value='" + $(self).val() + "' ondblclick=MoveElementTo(this,'" + source_id + "','" + target_id + "'}>" + $(self).text() + "</option>";#}
+{#            $("#" + target_id).append(opt_ele);#}
+{#            $(self).remove();#}
+{#        }#}
+{#        function SelectAllChosenData() {#}
+{#            $("select[class='right'] option").each(function() {#}
+{#               $(this).prop("selected",true);#}
+{#            });#}
+{#            return true;#}
+{#        }#}
+{#    </script>#}
+{##}
+{#{% endblock %}#}
+
+
